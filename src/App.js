@@ -7,9 +7,7 @@ import useAuth from "./hooks/useAuth";
 
 function Layout() {
   return (
-    <div>
-      <Outlet />
-    </div>
+    <Outlet />
   );
 }
 
