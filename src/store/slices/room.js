@@ -1,16 +1,16 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getServerUrl } from "../../utils/http";
-import { createRoom } from "../../firebase";
 
 export const roomSlice = createSlice({
   name: "room",
   initialState: {
-    roomId: "",
+    data: {
+      roomId: '',
+    },
   },
   reducers: {
     setRoom: (state, action) => {
-      state = {
-        ...state,
+      state.data = {
         ...action.payload,
       };
     },
@@ -24,7 +24,14 @@ export const createCreateRoomActionWith =
   () =>
   async (dispatch) => {
     try {
-      const data = await createRoom();
+      const response = await fetch(getServerUrl("/create-room"), {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
       dispatch(setRoom(data));
     } catch (error) {
       alert(error.message)
@@ -46,7 +53,6 @@ export const createEnterRoomActionWith =
         }),
       });
       const data = await response.json();
-      console.log(data)
       dispatch(setRoom(data));
     } catch (error) {
       alert(error.message)

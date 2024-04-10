@@ -9,7 +9,7 @@ import {
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const roomId = useSelector((state) => state.room.roomId);
+  const roomId = useSelector((state) => state.room.data.roomId);
   const [_roomId, _setRoomId] = useState("");
   const onCreateRoom = () => {
     dispatch(createCreateRoomActionWith());
@@ -23,7 +23,7 @@ const Home = () => {
   };
   useEffect(() => {
     if (roomId) {
-      navigate('/room')
+      navigate("/room");
     }
   }, [navigate, roomId]);
   return (
