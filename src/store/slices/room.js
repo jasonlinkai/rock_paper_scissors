@@ -33,8 +33,10 @@ export const createCreateRoomActionWith =
       });
       const data = await response.json();
       dispatch(setRoom(data));
+      return data;
     } catch (error) {
       alert(error.message)
+      return null;
     }
   };
 
@@ -54,8 +56,10 @@ export const createEnterRoomActionWith =
       });
       const data = await response.json();
       dispatch(setRoom(data));
+      return data;
     } catch (error) {
       alert(error.message)
+      return null;
     }
   };
 

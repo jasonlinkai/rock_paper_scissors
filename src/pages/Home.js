@@ -5,31 +5,48 @@ import {
   createCreateRoomActionWith,
   createEnterRoomActionWith,
 } from "../store/slices/room";
+import { setUser } from "../store/slices/user";
+import { v4 as uuid } from "uuid";
+import useAuth from "../hooks/useAuth"
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const roomId = useSelector((state) => state.room.data.roomId);
+  const auth = useAuth();
   const [_roomId, _setRoomId] = useState("");
-  const onCreateRoom = () => {
-    dispatch(createCreateRoomActionWith());
-  };
-  const onEnterRoom = () => {
+  const onEnterSuccess = () => {
     dispatch(
+      setUser({
+        userId: uuid(),
+      })
+    );
+  };
+  const onCreateRoom = async () => {
+    const data = await dispatch(createCreateRoomActionWith());
+    console.log('onCreateRoom', data)
+    if (data) {
+      onEnterSuccess();
+    }
+  };
+  const onEnterRoom = async () => {
+    const data = await dispatch(
       createEnterRoomActionWith({
         roomId: _roomId,
       })
     );
+    if (data) {
+      onEnterSuccess();
+    }
   };
   useEffect(() => {
-    if (roomId) {
+    if (auth) {
       navigate("/room");
     }
-  }, [navigate, roomId]);
+  }, [auth, navigate]);
   return (
     <div className="Home">
       <div>
-        <h1>剪刀石頭布!{roomId}</h1>
+        <h1>剪刀石頭布!</h1>
       </div>
       <div>
         <h2>創建新房間</h2>
