@@ -5,8 +5,8 @@ const configPathes = [
 ];
 require("dotenv").config({ path: configPathes });
 const { initializeApp } = require("firebase/app");
-const { child, getDatabase, push, ref, set } = require("firebase/database");
-const { serverRoomToClientRoom } = require("./utils/adaptors");
+const { getDatabase } = require("firebase/database");
+
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_APIKEY,
   authDomain: process.env.FIREBASE_AUTH_DOMAIN,
@@ -21,22 +21,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
-const createRoom = async () => {
-  const dbRef = push(child(ref(database), "rooms"));
-  const key = dbRef.key;
-  const payload = {
-    uid: key,
-  };
-  await set(dbRef, payload);
-  return serverRoomToClientRoom(payload);
-};
-
 module.exports = {
-  app,
   database,
-  models: {
-    room: {
-      createRoom,
-    },
-  },
 }
