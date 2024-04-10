@@ -22,7 +22,9 @@ const Home = () => {
     );
   };
   useEffect(() => {
-    navigate('/room')
+    if (roomId) {
+      navigate('/room')
+    }
   }, [navigate, roomId]);
   return (
     <div className="Home">
