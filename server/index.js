@@ -20,6 +20,10 @@ io.on('connection', (socket) => {
   console.log('a user connected');
 });
 
+io.on('disconnect', (socket) => {
+  console.log('a user disconnected');
+});
+
 server.listen(port, () => {
   console.log(`server running at http://localhost:${port}`);
 });
