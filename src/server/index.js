@@ -3,7 +3,8 @@ const { createServer } = require("node:http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const { database } = require("./firebase");
-const { events } = require("../constants");
+const { EVENTS, MSG_TYPES, SENDER_IDS } = require("../shared-utils/constants");
+const { newMessageId } = require("../shared-utils/id");
 
 const app = express();
 const server = createServer(app);
@@ -52,6 +53,18 @@ const checkConnectionValid = async (params) => {
   }
 };
 
+const newSystemMessage = (message) => {
+  return {
+    type: EVENTS.MESSAGE_ADDED,
+    data: {
+      messageId: newMessageId(),
+      msgType: MSG_TYPES.SYSTEM_TEXT,
+      senderId: SENDER_IDS.SERVER,
+      message,
+    },
+  };
+};
+
 io.on("connection", async (socket) => {
   const { userId, roomId } = socket.handshake.query;
   const log = (...args) =>
@@ -73,37 +86,47 @@ io.on("connection", async (socket) => {
       roomSockets.forEach((_, socketId) => {
         if (socketId !== socket.id) {
           io.to(socketId).emit("message", {
-            type: events.MEMBER_ADDED,
-            senderId: "system",
+            type: EVENTS.MEMBER_ADDED,
             data: {
+              senderId: SENDER_IDS.SERVER,
               userId,
             },
           });
-          io.to(socketId).emit("message", {
-            type: events.MESSAGE_ADDED,
-            senderId: "system",
-            data: {
-              message: `${userId}加入房間`,
-            },
-          });
+          io.to(socketId).emit(
+            "message",
+            newSystemMessage(`${userId}加入房間`)
+          );
         }
       });
     }
 
-    socket.on(events.GAME_START, async () => {
-      log(`event: ${events.GAME_START}`);
+    socket.on(EVENTS.MESSAGE_ADD, async (message) => {
+      log(`event: ${EVENTS.MESSAGE_ADD} message: ${message}`);
+      room.emit("message", {
+        type: EVENTS.MESSAGE_ADDED,
+        data: {
+          senderId: userId,
+          messageId: newMessageId(),
+          msgType: MSG_TYPES.TEXT,
+          message,
+        }
+      });
+    });
+
+    socket.on(EVENTS.GAME_START, async () => {
+      log(`event: ${EVENTS.GAME_START}`);
       await roomController.onRoomGameStart({ roomId, userId });
       room.emit("message", {
-        type: events.GAME_STARTED,
+        type: EVENTS.GAME_STARTED,
         senderId: "system",
       });
     });
 
-    socket.on(events.MEMBER_RAISE, async (raise) => {
-      log(`event: ${events.MEMBER_RAISE}`);
+    socket.on(EVENTS.MEMBER_RAISE, async (raise) => {
+      log(`event: ${EVENTS.MEMBER_RAISE}`);
       await roomController.onRoomMemberRaise({ roomId, userId, raise });
       room.emit("message", {
-        type: events.MEMBER_RAISED,
+        type: EVENTS.MEMBER_RAISED,
         senderId: "system",
         data: {
           userId,
@@ -119,24 +142,18 @@ io.on("connection", async (socket) => {
       });
       if (roomEntity.props.isGaming) {
         room.emit("message", {
-          type: events.GAME_FROCE_ENDED,
+          type: EVENTS.GAME_FROCE_ENDED,
           senderId: "system",
         });
       }
       room.emit("message", {
-        type: events.MEMBER_LEAVED,
+        type: EVENTS.MEMBER_LEAVED,
         senderId: "system",
         data: {
           userId,
         },
       });
-      room.emit("message", {
-        type: events.MESSAGE_ADDED,
-        senderId: "system",
-        data: {
-          message: `${userId}離開房間`,
-        },
-      });
+      room.emit("message", newSystemMessage(`${userId}離開房間`));
     });
   } catch (e) {
     socket.disconnect(true);

@@ -1,14 +1,24 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { useSocketContext } from "../contexts/SocketContext";
-import { events } from "../constants";
+import { EVENTS } from "../shared-utils/constants";
+import Page from "../container/Page";
+import Button from "../components/Button";
+import Message from "../components/Message";
+
+const MESSAGE_SCROLL_AREA_ID = "MESSAGE_SCROLL_AREA_ID";
 
 const Room = () => {
-  const { socket, initSocket, isConnected } = useSocketContext();
+  const { socket, initSocket } = useSocketContext();
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.roomId);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [text, setText] = useState("");
+  const [messages, setMessages] = useState([]);
 
-  const onMessageAdded = useCallback(() => {}, []);
+  const onMessageAdded = useCallback(({ data }) => {
+    setMessages((prev) => [...prev, data]);
+  }, []);
   const onMemberAdded = useCallback(() => {}, []);
   const onMemberLeaved = useCallback(() => {}, []);
   const onGameStarted = useCallback(() => {}, []);
@@ -18,19 +28,19 @@ const Room = () => {
     (data) => {
       console.log("onMessage!", data);
       switch (data.type) {
-        case events.MESSAGE_ADDED:
+        case EVENTS.MESSAGE_ADDED:
           onMessageAdded(data);
           break;
-        case events.MEMBER_ADDED:
+        case EVENTS.MEMBER_ADDED:
           onMemberAdded(data);
           break;
-        case events.MEMBER_LEAVED:
+        case EVENTS.MEMBER_LEAVED:
           onMemberLeaved(data);
           break;
-        case events.GAME_STARTED:
+        case EVENTS.GAME_STARTED:
           onGameStarted(data);
           break;
-        case events.GAME_ENDED:
+        case EVENTS.GAME_ENDED:
           onGameEnded(data);
           break;
         default:
@@ -47,8 +57,14 @@ const Room = () => {
     [onMessage]
   );
 
+  const emitMessage = useCallback(() => {
+    if (!text) return;
+    socket.emit(EVENTS.MESSAGE_ADD, text);
+    setText("");
+  }, [socket, text]);
+
   const emitStartGame = useCallback(() => {
-    socket.emit(events.GAME_START);
+    socket.emit(EVENTS.GAME_START);
   }, [socket]);
 
   useEffect(() => {
@@ -67,20 +83,103 @@ const Room = () => {
     };
   }, [socket, applyRoomLogic]);
 
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.key === "Enter") {
+        emitMessage();
+      }
+    };
+    window.addEventListener("keyup", handler);
+    return () => {
+      window.removeEventListener("keyup", handler);
+    };
+  }, [emitMessage]);
+
+  useEffect(() => {
+    const handler = () => {
+      const scrollDifference =
+        scrollArea.scrollHeight -
+        scrollArea.scrollTop -
+        scrollArea.clientHeight;
+
+      const isAtBottom = Math.abs(scrollDifference) <= 1;
+      console.log('isAtBottom', isAtBottom)
+      if (isAtBottom) {
+        setIsAtBottom(true);
+      }
+    };
+    const scrollArea = document.getElementById(MESSAGE_SCROLL_AREA_ID);
+    scrollArea.addEventListener("scroll", handler);
+    return () => {
+      scrollArea.removeEventListener("scroll", handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAtBottom) {
+      const scrollArea = document.getElementById(MESSAGE_SCROLL_AREA_ID);
+      scrollArea.scrollTop = scrollArea.scrollHeight;
+    }
+  }, [isAtBottom, messages]);
+
   return (
-    <div className="Room">
-      <div>{isConnected ? "連線成功" : "連線中"}</div>
-      <div>
-        <h1>剪刀石頭布!</h1>
+    <Page className="flex h-screen antialiased text-gray-800">
+      <div className="flex flex-row h-full w-full overflow-x-hidden">
+        <div className="flex flex-col flex-auto h-full p-6">
+          <div className="flex flex-col flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
+            <p className="text-center text-sm mb-2 font-semibold text-gray-700 tracking-wide">
+              房間ID: {roomId}
+            </p>
+            <div
+              id={MESSAGE_SCROLL_AREA_ID}
+              className="flex flex-col h-full overflow-x-auto mb-4"
+            >
+              <div className="flex flex-col h-full">
+                {messages.map((m) => {
+                  return <Message key={m.messageId} data={m}></Message>;
+                })}
+              </div>
+            </div>
+            <div className="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4">
+              <div className="flex-grow ml-4">
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    value={text}
+                    className="flex w-full border rounded-xl focus:outline-none focus:border-blue-300 pl-4 h-10"
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="ml-4 flex justify-between">
+                <Button className="mr-2" onClick={emitMessage}>
+                  <span>發送</span>
+                  <span className="ml-2">
+                    <svg
+                      className="w-4 h-4 transform rotate-45 -mt-px"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                      ></path>
+                    </svg>
+                  </span>
+                </Button>
+                <Button onClick={emitStartGame}>
+                  <span>發起猜拳</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <h2>用戶ID: {userId}</h2>
-        <h2>房間ID: {roomId}</h2>
-      </div>
-      <div>
-        <button onClick={emitStartGame}>開始遊戲</button>
-      </div>
-    </div>
+    </Page>
   );
 };
 export default Room;

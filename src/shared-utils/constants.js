@@ -1,7 +1,7 @@
 // localstorage
 const LOCALSTORAGE_KEY_USER_ID = 'LOCALSTORAGE_KEY_USER_ID'
 
-const events = {
+const EVENTS = {
   // game
   GAME_START: 'GAME_START',
   GAME_STARTED: 'GAME_STARTED', 
@@ -18,8 +18,20 @@ const events = {
   MEMBER_RAISED: 'MEMBER_RAISED',
 }
 
+const SENDER_IDS = {
+  SERVER: '-1',
+  CLIENT: '0',
+}
+
+const MSG_TYPES = {
+  SYSTEM_TEXT: 'SYSTEM_TEXT',
+  TEXT: 'TEXT',
+}
+
 
 module.exports = {
   LOCALSTORAGE_KEY_USER_ID,
-  events,
+  EVENTS,
+  SENDER_IDS,
+  MSG_TYPES,
 }
