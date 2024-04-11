@@ -27,24 +27,22 @@ function RequireAuth({ children }) {
 
 function App() {
   return (
-    <div className="App">
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route
-            path="room"
-            element={
-              <RequireAuth>
-                <SocketProvider>
-                  <Room />
-                </SocketProvider>
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<NoMatch />} />
-        </Route>
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route
+          path="room"
+          element={
+            <RequireAuth>
+              <SocketProvider>
+                <Room />
+              </SocketProvider>
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<NoMatch />} />
+      </Route>
+    </Routes>
   );
 }
 
