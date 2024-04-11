@@ -1,4 +1,4 @@
-const { child, push, ref, set } = require("firebase/database");
+const { child, push, ref, set, onValue } = require("firebase/database");
 const { serverRoomToClientRoom } = require("../utils/adaptors");
 
 module.exports = (database) => {
@@ -11,7 +11,21 @@ module.exports = (database) => {
     await set(dbRef, payload);
     return serverRoomToClientRoom(payload);
   };
+  const readRoom = async ({ roomId }) => {
+    const dbRef = child(child(ref(database), "rooms"), roomId);
+    return new Promise((resolve) => {
+      onValue(dbRef, function (snapshot) {
+        const val = snapshot.val();
+        if (val) {
+          resolve(serverRoomToClientRoom(val)) 
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  };
   return {
     createRoom,
+    readRoom,
   };
-}
+};

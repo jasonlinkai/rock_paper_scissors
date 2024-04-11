@@ -8,7 +8,8 @@ module.exports = (app, database) => {
     res.json(data);
   });
 
-  app.post("/enter-room", function (req, res) {
-    res.json(req.body);
+  app.post("/enter-room", async function (req, res) {
+    const data = await roomModel.readRoom(req.body);
+    res.json(data);
   });
 };
