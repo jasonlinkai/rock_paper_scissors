@@ -1,7 +1,7 @@
 const path = require("path");
 const configPathes = [
-  path.resolve("server", ".env.local"),
-  path.resolve("server", ".env"),
+  path.resolve("src", "server", ".env.local"),
+  path.resolve("src", "server", ".env"),
 ];
 require("dotenv").config({ path: configPathes });
 const { initializeApp } = require("firebase/app");

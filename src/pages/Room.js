@@ -1,47 +1,43 @@
 import { useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useSocketContext } from "../contexts/SocketContext";
-import {
-  MESAGE_TYPE_MSG,
-  MESAGE_TYPE_GAME_RESULT,
-  MESAGE_TYPE_START_GAME,
-} from "../constants";
+import { events } from "../constants";
 
 const Room = () => {
   const { socket, initSocket, isConnected } = useSocketContext();
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.roomId);
 
-  const onMsg = useCallback(() => {
-    console.log("onMsg!");
-  }, []);
-
-  const onStartGame = useCallback(() => {
-    console.log("onStartGame!");
-  }, []);
-
-  const onGameResult = useCallback(() => {
-    console.log("onGameResult!");
-  }, []);
+  const onMessageAdded = useCallback(() => {}, []);
+  const onMemberAdded = useCallback(() => {}, []);
+  const onMemberLeaved = useCallback(() => {}, []);
+  const onGameStarted = useCallback(() => {}, []);
+  const onGameEnded = useCallback(() => {}, []);
 
   const onMessage = useCallback(
-    ({ type, data }) => {
-      console.log("message", type, data);
-      switch (type) {
-        case MESAGE_TYPE_MSG:
-          onMsg(data);
+    (data) => {
+      console.log("onMessage!", data);
+      switch (data.type) {
+        case events.MESSAGE_ADDED:
+          onMessageAdded(data);
           break;
-        case MESAGE_TYPE_START_GAME:
-          onStartGame(data);
+        case events.MEMBER_ADDED:
+          onMemberAdded(data);
           break;
-        case MESAGE_TYPE_GAME_RESULT:
-          onGameResult(data);
+        case events.MEMBER_LEAVED:
+          onMemberLeaved(data);
+          break;
+        case events.GAME_STARTED:
+          onGameStarted(data);
+          break;
+        case events.GAME_ENDED:
+          onGameEnded(data);
           break;
         default:
           break;
       }
     },
-    [onMsg, onStartGame, onGameResult]
+    [onMessageAdded, onMemberAdded, onMemberLeaved, onGameStarted, onGameEnded]
   );
 
   const applyRoomLogic = useCallback(
@@ -52,7 +48,7 @@ const Room = () => {
   );
 
   const emitStartGame = useCallback(() => {
-    socket.emit("startGame");
+    socket.emit(events.GAME_START);
   }, [socket]);
 
   useEffect(() => {

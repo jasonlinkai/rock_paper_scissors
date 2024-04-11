@@ -33,7 +33,8 @@ class RoomModel {
   }
   async updateRoom({ roomId, updates }) {
     const dbRef = child(child(ref(this.database), "rooms"), roomId);
-    return await update(dbRef, updates);
+    await update(dbRef, updates);
+    return await this.readRoom({ roomId });
   }
   async onRoomMemberAdd({ roomId, userId }) {
     const room = await this.readRoom({ roomId });
@@ -46,22 +47,22 @@ class RoomModel {
       updates: roomEntity.snapshot(),
     });
   }
-  async onRoomMemberLeave({ roomId, userId }) {
+  async onRoomGameStart({ roomId }) {
     const room = await this.readRoom({ roomId });
     const roomEntity = new ClassRoomEntity(room);
 
-    roomEntity.memberLeave({ userId });
+    roomEntity.gameStart();
 
     return this.updateRoom({
       roomId,
       updates: roomEntity.snapshot(),
     });
   }
-  async onRoomGameStart({ roomId }) {
+  async onRoomMemberLeave({ roomId, userId }) {
     const room = await this.readRoom({ roomId });
     const roomEntity = new ClassRoomEntity(room);
 
-    roomEntity.gameStart();
+    roomEntity.memberLeave({ userId });
 
     return this.updateRoom({
       roomId,

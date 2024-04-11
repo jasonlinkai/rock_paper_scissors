@@ -15,6 +15,9 @@ class RoomEntity {
   gameStart() {
     this.props.isGaming = true;
   }
+  gameEnd() {
+    this.props.isGaming = false;
+  }
   snapshot() {
     return this.props;
   }
