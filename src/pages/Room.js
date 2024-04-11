@@ -1,53 +1,25 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { createSocket } from "../socket";
-import {
-  onSocketConnected,
-  onSocketDisconnected,
-} from "../store/slices/socket";
+import useSocket from "../hooks/useSocket";
+import useRoomSocket from "../hooks/useRoomSocket";
 
 const Room = () => {
-  const socketRef = useRef();
   const isConnected = useSelector((state) => state.socket.data.isConnected);
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.roomId);
+  const s = useSocket({ userId, roomId });
+  const socket = useRoomSocket(s);
 
-  const onSocketReceivedMessage = useCallback(() => {}, []);
+  const onStartGame = useCallback(() => {
+    socket.emit("startGame");
+  }, [socket]);
 
-  const onStartGame = () => {
-    socketRef.current.emit({
-      type: 'startGame',
-    })
-  };
-
-  const handler = useCallback(
-    ({ type, data }) => {
-      switch (type) {
-        case "connect":
-          onSocketConnected();
-          break;
-        case "message":
-          onSocketReceivedMessage(type, data);
-          break;
-        case "disconnect":
-          onSocketDisconnected();
-          break;
-        default:
-          break;
-      }
-    },
-    [onSocketReceivedMessage]
-  );
   useEffect(() => {
-    socketRef.current = createSocket({
-      emit: handler,
-    });
-    socketRef.current.connect();
+    socket.connect();
     return () => {
-      socketRef.current.disconnect();
-      socketRef.current = null;
+      socket.disconnect();
     };
-  }, [handler]);
+  }, [socket]);
 
   return (
     <div className="Room">

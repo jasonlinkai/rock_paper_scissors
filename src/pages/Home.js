@@ -23,7 +23,6 @@ const Home = () => {
   };
   const onCreateRoom = async () => {
     const data = await dispatch(createCreateRoomActionWith());
-    console.log('onCreateRoom', data)
     if (data) {
       onEnterSuccess();
     }
