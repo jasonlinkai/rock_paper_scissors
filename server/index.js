@@ -8,32 +8,82 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 const port = 3001;
+const MAX_MEMBER_COUNT = 2;
 
 app.use(cors());
 app.use(express.json());
 
-const registerRoomController = require("./controllers/roomController");
+// entity class
+const ClassRoomEntity = require("./entities/RoomEntity");
+// model class
+const ClassRoomModel = require("./models/RoomModel");
+// controller class
+const ClassRoomController = require("./controllers/RoomController");
 
-registerRoomController(app, database);
+// model instance
+const roomModel = new ClassRoomModel({ database });
+// controller instance
+const roomController = new ClassRoomController({ app, roomModel });
 
-io.on("connection", (socket) => {
+const checkConnectionValid = async (params) => {
+  const { userId, roomId } = params;
+  if (!userId) {
+    throw new Error("no userId");
+  }
+  if (!roomId) {
+    throw new Error("no roomId");
+  }
+  const room = await roomModel.readRoom({ roomId });
+  if (!room) {
+    throw new Error("room not fund");
+  }
+  const roomEntity = new ClassRoomEntity(room);
+
+  if (roomEntity.props.isGaming) {
+    throw new Error("is gaming");
+  }
+
+  if (roomEntity.props.members.length === MAX_MEMBER_COUNT) {
+    throw new Error("room is full");
+  }
+};
+
+io.on("connection", async (socket) => {
   const { userId, roomId } = socket.handshake.query;
-  const log = (...args) => console.log(...args, `user: ${userId} room: ${roomId} `);
-  log('event: connect');
+  const log = (...args) =>
+    console.log(...args, `user: ${userId} room: ${roomId} `);
 
-  socket.join(roomId);
-  io.to(roomId).emit("message", {
-    type: "msg",
-    data: `${userId}加入房間`,
-  });
+  log("event: connection");
 
-  socket.on('startGame', () => {
-    log('event: startGame');
-  });
+  try {
+    checkConnectionValid(socket.handshake.query);
+    await roomModel.onRoomMemberAdd({
+      roomId,
+      userId,
+    });
 
-  socket.on("disconnect", () => {
-    log('event: disconnect');
-  });
+    socket.join(roomId);
+    io.to(roomId).emit("message", {
+      type: "msg",
+      data: `${userId}加入房間`,
+    });
+
+    socket.on("startGame", async () => {
+      log("event: startGame");
+      await roomModel.onRoomGameStart({ roomId });
+    });
+
+    socket.on("disconnect", async () => {
+      log("event: disconnect");
+      await roomModel.onRoomMemberLeave({
+        roomId,
+        userId,
+      });
+    });
+  } catch (e) {
+    socket.disconnect(true);
+    log(`err: ${e.message}`);
+  }
 });
 
 server.listen(port, () => {

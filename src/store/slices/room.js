@@ -21,7 +21,9 @@ export const roomSlice = createSlice({
 export const { setRoom } = roomSlice.actions;
 
 export const createCreateRoomActionWith =
-  () =>
+  ({
+    userId,
+  }) =>
   async (dispatch) => {
     try {
       const response = await fetch(getServerUrl("/create-room"), {
@@ -30,18 +32,20 @@ export const createCreateRoomActionWith =
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          userId,
+        }),
       });
       const data = await response.json();
       dispatch(setRoom(data));
       return data;
     } catch (error) {
-      alert(error.message)
       return null;
     }
   };
 
 export const createEnterRoomActionWith =
-  ({ roomId }) =>
+  ({ userId, roomId }) =>
   async (dispatch) => {
     try {
       const response = await fetch(getServerUrl("/enter-room"), {
@@ -51,6 +55,7 @@ export const createEnterRoomActionWith =
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          userId,
           roomId,
         }),
       });
@@ -58,7 +63,6 @@ export const createEnterRoomActionWith =
       dispatch(setRoom(data));
       return data;
     } catch (error) {
-      alert(error.message)
       return null;
     }
   };

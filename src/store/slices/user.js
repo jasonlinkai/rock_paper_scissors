@@ -1,10 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { LOCALSTORAGE_KEY_USER_ID } from "../../constants"
+import { v4 as uuid } from "uuid";
+
+const userId = localStorage.getItem(LOCALSTORAGE_KEY_USER_ID);
+if (!userId) {
+  localStorage.setItem(LOCALSTORAGE_KEY_USER_ID, uuid())
+}
 
 export const userSlice = createSlice({
   name: "user",
   initialState: {
     data: {
-      userId: '',
+      userId: userId,
     },
   },
   reducers: {

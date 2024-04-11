@@ -1,0 +1,7 @@
+// localstorage
+export const LOCALSTORAGE_KEY_USER_ID = 'LOCALSTORAGE_KEY_USER_ID'
+
+// message type
+export const MESAGE_TYPE_MSG = "MESAGE_TYPE_MSG";
+export const MESAGE_TYPE_START_GAME = "MESAGE_TYPE_MSG";
+export const MESAGE_TYPE_GAME_RESULT = "MESAGE_TYPE_GAME_RESULT";

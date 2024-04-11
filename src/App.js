@@ -4,11 +4,10 @@ import Home from "./pages/Home";
 import Room from "./pages/Room";
 import NoMatch from "./pages/NoMatch";
 import useAuth from "./hooks/useAuth";
+import { SocketProvider } from "./contexts/SocketContext";
 
 function Layout() {
-  return (
-    <Outlet />
-  );
+  return <Outlet />;
 }
 
 function RequireAuth({ children }) {
@@ -36,7 +35,9 @@ function App() {
             path="room"
             element={
               <RequireAuth>
-                <Room />
+                <SocketProvider>
+                  <Room />
+                </SocketProvider>
               </RequireAuth>
             }
           />

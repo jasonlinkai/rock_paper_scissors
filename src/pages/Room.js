@@ -1,25 +1,75 @@
-import { useCallback, useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
-import useSocket from "../hooks/useSocket";
-import useRoomSocket from "../hooks/useRoomSocket";
+import { useSocketContext } from "../contexts/SocketContext";
+import {
+  MESAGE_TYPE_MSG,
+  MESAGE_TYPE_GAME_RESULT,
+  MESAGE_TYPE_START_GAME,
+} from "../constants";
 
 const Room = () => {
-  const isConnected = useSelector((state) => state.socket.data.isConnected);
+  const { socket, initSocket, isConnected } = useSocketContext();
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.roomId);
-  const s = useSocket({ userId, roomId });
-  const socket = useRoomSocket(s);
+
+  const onMsg = useCallback(() => {
+    console.log("onMsg!");
+  }, []);
 
   const onStartGame = useCallback(() => {
+    console.log("onStartGame!");
+  }, []);
+
+  const onGameResult = useCallback(() => {
+    console.log("onGameResult!");
+  }, []);
+
+  const onMessage = useCallback(
+    ({ type, data }) => {
+      console.log("message", type, data);
+      switch (type) {
+        case MESAGE_TYPE_MSG:
+          onMsg(data);
+          break;
+        case MESAGE_TYPE_START_GAME:
+          onStartGame(data);
+          break;
+        case MESAGE_TYPE_GAME_RESULT:
+          onGameResult(data);
+          break;
+        default:
+          break;
+      }
+    },
+    [onMsg, onStartGame, onGameResult]
+  );
+
+  const applyRoomLogic = useCallback(
+    (socket) => {
+      socket.on("message", onMessage);
+    },
+    [onMessage]
+  );
+
+  const emitStartGame = useCallback(() => {
     socket.emit("startGame");
   }, [socket]);
 
   useEffect(() => {
-    socket.connect();
+    initSocket({ userId, roomId });
+  }, [initSocket, userId, roomId]);
+
+  useEffect(() => {
+    if (socket) {
+      applyRoomLogic(socket);
+      socket.connect();
+    }
     return () => {
-      socket.disconnect();
+      if (socket) {
+        socket.disconnect();
+      }
     };
-  }, [socket]);
+  }, [socket, applyRoomLogic]);
 
   return (
     <div className="Room">
@@ -32,7 +82,7 @@ const Room = () => {
         <h2>房間ID: {roomId}</h2>
       </div>
       <div>
-        <button onClick={onStartGame}>開始遊戲</button>
+        <button onClick={emitStartGame}>開始遊戲</button>
       </div>
     </div>
   );
