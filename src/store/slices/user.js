@@ -11,7 +11,7 @@ export const userSlice = createSlice({
   name: "user",
   initialState: {
     data: {
-      userId: userId,
+      userId: localStorage.getItem(LOCALSTORAGE_KEY_USER_ID),
     },
   },
   reducers: {
