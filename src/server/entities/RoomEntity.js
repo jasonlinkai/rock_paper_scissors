@@ -1,25 +1,39 @@
 class RoomEntity {
-  constructor({ uid, roomId, members = [], isGaming }) {
-    this.props = {};
+  constructor({
+    uid = "",
+    userIds = [],
+    locked = false,
+    gameId = "",
+    raisedIds = [],
+    raisedRecord = {},
+  }) {
+    this.props = this.props || {};
     this.props.uid = uid;
-    this.props.roomId = uid || roomId;
-    this.props.members = members;
-    this.props.isGaming = isGaming;
+    this.props.userIds = userIds;
+    this.props.locked = locked;
+    this.props.raisedIds = raisedIds;
+    this.props.raisedRecord = raisedRecord;
   }
   memberAdd({ userId }) {
-    this.props.members = Array.from(new Set([...this.props.members, userId]));
+    this.props.userIds = Array.from(new Set([...this.props.userIds, userId]));
   }
   memberLeave({ userId }) {
-    this.props.members = this.props.members.filter((id) => id !== userId);
+    this.props.userIds = this.props.userIds.filter((id) => id !== userId);
   }
   gameStart() {
-    this.props.isGaming = true;
+    this.props.locked = true;
   }
-  gameEnd() {
-    this.props.isGaming = false;
+  memberRaise({ userId, raise }) {
+    this.props.raisedIds = [...this.props.raisedIds, userId];
+    this.props.raisedRecord[userId] = raise;
+  }
+  resetGame() {
+    this.props.locked = false;
+    this.props.raisedIds = [];
+    this.props.raisedRecord = {};
   }
   snapshot() {
-    return this.props;
+    return JSON.parse(JSON.stringify(this.props));
   }
 }
 

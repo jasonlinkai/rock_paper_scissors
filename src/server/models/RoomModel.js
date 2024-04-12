@@ -1,26 +1,23 @@
-const { child, push, ref, set, onValue, update } = require("firebase/database");
-const ClassRoomEntity = require("../entities/RoomEntity");
+const firebase = require("firebase/database");
+const { child, push, ref, set, onValue } = firebase;
 
 class RoomModel {
   constructor({ database }) {
     this.database = database;
   }
-  async createRoom({ userId }) {
+  async create(snapshot) {
     const dbRef = push(child(ref(this.database), "rooms"));
-    const key = dbRef.key;
-    const e = new ClassRoomEntity({
-      uid: key,
-      roomId: key,
-      members: [userId],
-      isGaming: false,
-    });
-    const snapshot = e.snapshot();
-    await set(dbRef, snapshot);
-    return snapshot;
+    const uid = dbRef.key;
+    const mergedSnapshot = {
+      ...snapshot,
+      uid,
+    };
+    await set(dbRef, mergedSnapshot);
+    return mergedSnapshot;
   }
-  async readRoom({ roomId }) {
+  async read(uid) {
     return new Promise((resolve) => {
-      const dbRef = child(child(ref(this.database), "rooms"), roomId);
+      const dbRef = child(child(ref(this.database), "rooms"), uid);
       onValue(dbRef, function (snapshot) {
         const val = snapshot.val();
         if (val) {
@@ -31,43 +28,10 @@ class RoomModel {
       });
     });
   }
-  async updateRoom({ roomId, updates }) {
-    const dbRef = child(child(ref(this.database), "rooms"), roomId);
-    await update(dbRef, updates);
-    return await this.readRoom({ roomId });
-  }
-  async onRoomMemberAdd({ roomId, userId }) {
-    const room = await this.readRoom({ roomId });
-    const roomEntity = new ClassRoomEntity(room);
-
-    roomEntity.memberAdd({ userId });
-
-    return this.updateRoom({
-      roomId,
-      updates: roomEntity.snapshot(),
-    });
-  }
-  async onRoomGameStart({ roomId }) {
-    const room = await this.readRoom({ roomId });
-    const roomEntity = new ClassRoomEntity(room);
-
-    roomEntity.gameStart();
-
-    return this.updateRoom({
-      roomId,
-      updates: roomEntity.snapshot(),
-    });
-  }
-  async onRoomMemberLeave({ roomId, userId }) {
-    const room = await this.readRoom({ roomId });
-    const roomEntity = new ClassRoomEntity(room);
-
-    roomEntity.memberLeave({ userId });
-
-    return this.updateRoom({
-      roomId,
-      updates: roomEntity.snapshot(),
-    });
+  async update(snapshot) {
+    const dbRef = child(child(ref(this.database), "rooms"), snapshot.uid);
+    await firebase.update(dbRef, snapshot);
+    return snapshot;
   }
 }
 

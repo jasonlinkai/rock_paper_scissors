@@ -5,7 +5,10 @@ export const roomSlice = createSlice({
   name: "room",
   initialState: {
     data: {
-      roomId: '',
+      uid: '',
+      userIds: [],
+      locked: false,
+      gameId: '',
     },
   },
   reducers: {

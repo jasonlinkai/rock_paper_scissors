@@ -1,50 +1,77 @@
-import {
-  useEffect,
-  useCallback,
-  useState,
-  useRef,
-} from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useCallback, useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useSocketContext } from "../contexts/SocketContext";
-import { EVENTS } from "../shared-utils/constants";
+import {
+  EVENTS,
+  MAX_MEMBER_COUNT,
+  RAISE_TYPES,
+} from "../shared-utils/constants";
 import Page from "../container/Page";
 import Button from "../components/Button";
 import Message from "../components/Message";
+import { setRoom } from "../store/slices/room";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHandRock,
+  faHandPaper,
+  faHandScissors,
+} from "@fortawesome/free-solid-svg-icons";
+import clsx from "clsx";
 
 const MESSAGE_SCROLL_AREA_ID = "MESSAGE_SCROLL_AREA_ID";
 const MESSAGE_SCROLL_CONTENT_ID = "MESSAGE_SCROLL_CONTENT_ID";
 
 const Room = () => {
+  const dispatch = useDispatch();
   const { socket, initSocket } = useSocketContext();
   const isAtBottom = useRef(true);
   const userId = useSelector((state) => state.user.data.userId);
-  const roomId = useSelector((state) => state.room.data.roomId);
+  const roomId = useSelector((state) => state.room.data.uid);
+  const room = useSelector((state) => state.room.data);
+  const [isGameStarted, setIsGameStarted] = useState(false);
+  const [raise, setRaise] = useState("");
   const [text, setText] = useState("");
   const [messages, setMessages] = useState([]);
 
-  const onMessageAdded = useCallback(({ data }) => {
-    setMessages((prev) => [...prev, data]);
+  const onRoomUpdated = useCallback(
+    ({ data }) => {
+      dispatch(setRoom(data));
+    },
+    [dispatch]
+  );
+  const onMessageAdded = useCallback(({ data, messageId }) => {
+    const mergedData = {
+      ...data,
+      messageId,
+    } 
+    setMessages((prev) => [...prev, mergedData]);
   }, []);
-  const onMemberAdded = useCallback(() => {}, []);
-  const onMemberLeaved = useCallback(() => {}, []);
-  const onGameStarted = useCallback(() => {}, []);
-  const onGameEnded = useCallback(() => {}, []);
+  const onGameStarted = useCallback(() => {
+    setIsGameStarted(true);
+  }, []);
+  const onMemberRaised = useCallback(({ data }) => {
+    setRaise(data.raise);
+  }, []);
+  const onGameEnded = useCallback(() => {
+    setRaise("");
+    setIsGameStarted(false);
+  }, []);
 
   const onMessage = useCallback(
     (data) => {
       console.log("onMessage!", data);
       switch (data.type) {
+        case EVENTS.ROOM_UPDATED:
+          onRoomUpdated(data);
+          break;
         case EVENTS.MESSAGE_ADDED:
           onMessageAdded(data);
           break;
-        case EVENTS.MEMBER_ADDED:
-          onMemberAdded(data);
-          break;
-        case EVENTS.MEMBER_LEAVED:
-          onMemberLeaved(data);
-          break;
         case EVENTS.GAME_STARTED:
           onGameStarted(data);
+          break;
+        case EVENTS.MEMBER_RAISED:
+          onMemberRaised(data);
           break;
         case EVENTS.GAME_ENDED:
           onGameEnded(data);
@@ -53,7 +80,7 @@ const Room = () => {
           break;
       }
     },
-    [onMessageAdded, onMemberAdded, onMemberLeaved, onGameStarted, onGameEnded]
+    [onRoomUpdated, onMessageAdded, onGameStarted, onMemberRaised, onGameEnded]
   );
 
   const applyRoomLogic = useCallback(
@@ -70,8 +97,19 @@ const Room = () => {
   }, [socket, text]);
 
   const emitStartGame = useCallback(() => {
+    if (room.userIds.length !== MAX_MEMBER_COUNT) {
+      alert("人數不足, 無法開始");
+      return;
+    }
     socket.emit(EVENTS.GAME_START);
-  }, [socket]);
+  }, [socket, room]);
+
+  const emitMemberRaise = useCallback(
+    (raise) => {
+      socket.emit(EVENTS.MEMBER_RAISE, raise);
+    },
+    [socket]
+  );
 
   useEffect(() => {
     initSocket({ userId, roomId });
@@ -146,7 +184,7 @@ const Room = () => {
                 })}
               </div>
             </div>
-            <div className="flex flex-row items-center h-16 rounded-xl bg-white w-full px-4">
+            <div className="flex flex-row items-center h-40 sm:h-16 rounded-xl bg-white w-full px-4 flex-wrap">
               <div className="flex-grow ml-4">
                 <div className="relative w-full">
                   <input
@@ -177,14 +215,59 @@ const Room = () => {
                     </svg>
                   </span>
                 </Button>
-                <Button onClick={emitStartGame}>
-                  <span>發起猜拳</span>
-                </Button>
+                {!room.locked && (
+                  <Button onClick={emitStartGame}>
+                    <span>發起猜拳</span>
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+      {isGameStarted && (
+        <div className="absolute w-screen h-screen bg-black opacity-75 flex justify-center items-center">
+          <div className="flex flex-row w-[300px] pa-4">
+            <div className="flex flex-col flex-auto h-full p-6">
+              <div className="flex flex-row justify-between flex-auto flex-shrink-0 rounded-2xl bg-gray-100 h-full p-4">
+                <FontAwesomeIcon
+                  className={clsx([
+                    "text-blue-500 cursor-pointer hover:scale-110 transition-transform duration-500",
+                    {
+                      "text-green-500": raise === RAISE_TYPES.SCISSORS,
+                    },
+                  ])}
+                  size="4x"
+                  icon={faHandScissors}
+                  onClick={() => emitMemberRaise(RAISE_TYPES.SCISSORS)}
+                />
+                <FontAwesomeIcon
+                  className={clsx([
+                    "text-blue-500 cursor-pointer hover:scale-110 transition-transform duration-500",
+                    {
+                      "text-green-500": raise === RAISE_TYPES.ROCK,
+                    },
+                  ])}
+                  size="4x"
+                  icon={faHandRock}
+                  onClick={() => emitMemberRaise(RAISE_TYPES.ROCK)}
+                />
+                <FontAwesomeIcon
+                  className={clsx([
+                    "text-blue-500 cursor-pointer hover:scale-110 transition-transform duration-500",
+                    {
+                      "text-green-500": raise === RAISE_TYPES.PAPER,
+                    },
+                  ])}
+                  size="4x"
+                  icon={faHandPaper}
+                  onClick={() => emitMemberRaise(RAISE_TYPES.PAPER)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Page>
   );
 };
