@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
@@ -10,8 +11,15 @@ const server = createServer(app);
 const io = new Server(server);
 const port = 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost', 'http://localhost:443'],
+}));
+app.use(express.static(path.join(__dirname, '../', '../', 'build')));
 app.use(express.json());
+
+app.get("/", function (req, res) {
+  res.sendFile(path.join(__dirname, '../', '../', 'build', 'index.html'));
+});
 
 // class
 const ClassRoomEntity = require("./entities/RoomEntity");
