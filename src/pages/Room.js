@@ -1,4 +1,9 @@
-import { useEffect, useCallback, useState } from "react";
+import {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+} from "react";
 import { useSelector } from "react-redux";
 import { useSocketContext } from "../contexts/SocketContext";
 import { EVENTS } from "../shared-utils/constants";
@@ -7,12 +12,13 @@ import Button from "../components/Button";
 import Message from "../components/Message";
 
 const MESSAGE_SCROLL_AREA_ID = "MESSAGE_SCROLL_AREA_ID";
+const MESSAGE_SCROLL_CONTENT_ID = "MESSAGE_SCROLL_CONTENT_ID";
 
 const Room = () => {
   const { socket, initSocket } = useSocketContext();
+  const isAtBottom = useRef(true);
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.roomId);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [text, setText] = useState("");
   const [messages, setMessages] = useState([]);
 
@@ -96,19 +102,16 @@ const Room = () => {
   }, [emitMessage]);
 
   useEffect(() => {
+    const scrollArea = document.getElementById(MESSAGE_SCROLL_AREA_ID);
+    const scrollContent = document.getElementById(MESSAGE_SCROLL_CONTENT_ID);
     const handler = () => {
       const scrollDifference =
-        scrollArea.scrollHeight -
+        scrollContent.scrollHeight -
         scrollArea.scrollTop -
         scrollArea.clientHeight;
 
-      const isAtBottom = Math.abs(scrollDifference) <= 1;
-      console.log('isAtBottom', isAtBottom)
-      if (isAtBottom) {
-        setIsAtBottom(true);
-      }
+      isAtBottom.current = Math.abs(scrollDifference) <= 1;
     };
-    const scrollArea = document.getElementById(MESSAGE_SCROLL_AREA_ID);
     scrollArea.addEventListener("scroll", handler);
     return () => {
       scrollArea.removeEventListener("scroll", handler);
@@ -116,11 +119,11 @@ const Room = () => {
   }, []);
 
   useEffect(() => {
-    if (isAtBottom) {
+    if (isAtBottom.current) {
       const scrollArea = document.getElementById(MESSAGE_SCROLL_AREA_ID);
       scrollArea.scrollTop = scrollArea.scrollHeight;
     }
-  }, [isAtBottom, messages]);
+  }, [messages]);
 
   return (
     <Page className="flex h-screen antialiased text-gray-800">
@@ -134,7 +137,10 @@ const Room = () => {
               id={MESSAGE_SCROLL_AREA_ID}
               className="flex flex-col h-full overflow-x-auto mb-4"
             >
-              <div className="flex flex-col h-full">
+              <div
+                id={MESSAGE_SCROLL_CONTENT_ID}
+                className="flex flex-col h-full"
+              >
                 {messages.map((m) => {
                   return <Message key={m.messageId} data={m}></Message>;
                 })}
