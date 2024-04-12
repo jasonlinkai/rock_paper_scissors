@@ -17,7 +17,6 @@ app.use(express.json());
 const ClassRoomEntity = require("./entities/RoomEntity");
 const ClassRoomModel = require("./models/RoomModel");
 const ClassRoomController = require("./controllers/RoomController");
-const { newMessage } = require("./utils/message");
 
 // instance
 const roomModel = new ClassRoomModel({ database });
@@ -35,12 +34,10 @@ const processQueue = async () => {
     const action = queue.shift();
     try {
       await action();
-      processing = false;
     } catch (error) {
-      processing = false;
-      processQueue();
     } finally {
       processing = false;
+      processQueue();
     }
   }
 };
@@ -94,7 +91,6 @@ io.on("connection", async (socket) => {
       enqueue(roomController.messageAdd({ roomId, senderId: userId, message }));
     });
 
-    // 當用戶發起開始遊戲
     socket.on(EVENTS.GAME_START, async () => {
       log(`event: ${EVENTS.GAME_START}`);
       enqueue(roomController.gameStart({ roomId }));

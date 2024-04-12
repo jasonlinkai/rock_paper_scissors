@@ -105,10 +105,12 @@ const Room = () => {
   }, [socket, room]);
 
   const emitMemberRaise = useCallback(
-    (raise) => {
-      socket.emit(EVENTS.MEMBER_RAISE, raise);
+    (v) => {
+      if (!raise) {
+        socket.emit(EVENTS.MEMBER_RAISE, v);
+      }
     },
-    [socket]
+    [socket, raise]
   );
 
   useEffect(() => {

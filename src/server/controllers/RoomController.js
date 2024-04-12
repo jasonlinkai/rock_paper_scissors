@@ -5,6 +5,7 @@ const {
   MSG_TYPES,
   RAISE_TYPES_TEXT,
 } = require("../../shared-utils/constants");
+const { computedRockPaperScissorsResult } = require("../../shared-utils/result");
 
 class RoomController {
   constructor({ app, roomModel, gameModel, io }) {
@@ -64,7 +65,7 @@ class RoomController {
         })
       );
       if (newSnapshot.locked) {
-        await this.forceGameEnd({ roomId, userId, roomEntity })
+        await this.forceGameEnd({ roomId, userId, roomEntity });
       }
     };
   }
@@ -129,27 +130,27 @@ class RoomController {
     const newSnapshot = await this._saveEntity(roomEntity);
     this._notifyRoomUpdate({ roomId, snapshot: newSnapshot });
 
-    const { uid, userIds, raisedRecord } = snapshot;
+    const { uid, userIds, raisedIds, raisedRecord } = snapshot;
     userIds.forEach((userId) => {
-      const raise = raisedRecord[userId]
+      const raise = raisedRecord[userId];
       this.io.to(uid).emit(
         "message",
         newMessage({
           type: EVENTS.MESSAGE_ADDED,
           data: {
             msgType: MSG_TYPES.SYSTEM_TEXT,
-            message: `${userId}出了${RAISE_TYPES_TEXT[raise]}了!`,
+            message: `${userId}出了${RAISE_TYPES_TEXT[raise]}!`,
           },
         })
       );
-    })
+    });
     this.io.to(uid).emit(
       "message",
       newMessage({
         type: EVENTS.MESSAGE_ADDED,
         data: {
           msgType: MSG_TYPES.SYSTEM_TEXT,
-          message: `勝利者是A`,
+          message: computedRockPaperScissorsResult(raisedRecord, raisedIds),
         },
       })
     );
@@ -211,7 +212,7 @@ class RoomController {
       "message",
       newMessage({
         type: EVENTS.ROOM_UPDATED,
-        data: s
+        data: s,
       })
     );
   }

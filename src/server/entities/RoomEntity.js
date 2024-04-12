@@ -24,7 +24,7 @@ class RoomEntity {
     this.props.locked = true;
   }
   memberRaise({ userId, raise }) {
-    this.props.raisedIds = [...this.props.raisedIds, userId];
+    this.props.raisedIds = Array.from(new Set([...this.props.raisedIds, userId]));
     this.props.raisedRecord[userId] = raise;
   }
   resetGame() {
