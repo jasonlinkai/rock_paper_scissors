@@ -68,3 +68,16 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+### login to aws-ecr.
+```sh
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 668605093993.dkr.ecr.us-east-1.amazonaws.com
+```
+
+### build and tag and push image to aws-ecr.
+````sh
+docker build -t rps_client .
+docker tag rps_client:latest 668605093993.dkr.ecr.us-east-1.amazonaws.com/rock_paper_scissors:latest
+docker push 668605093993.dkr.ecr.us-east-1.amazonaws.com/rock_paper_scissors:latest
+```
