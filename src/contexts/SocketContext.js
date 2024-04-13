@@ -12,6 +12,12 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isReconnected, setIsReconnected] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const onConnectError = useCallback((error) => {
+    console.log("connect_error!", error.message);
+    setErrorMsg(error.message)
+  }, []);
 
   const onConnect = useCallback(() => {
     console.log("connect!");
@@ -31,6 +37,7 @@ export const SocketProvider = ({ children }) => {
 
   const initSocket = useCallback(
     ({ userId, roomId }) => {
+      setErrorMsg('')
       const s = createSocket({
         options: {
           query: {
@@ -39,12 +46,13 @@ export const SocketProvider = ({ children }) => {
           },
         },
       });
+      s.on('connect_error', onConnectError);
       s.on("connect", onConnect);
       s.on("disconnect", onDisconnect);
       s.on("reconnect", onReconnect);
       setSocket(s);
     },
-    [onConnect, onDisconnect, onReconnect]
+    [onConnectError, onConnect, onDisconnect, onReconnect]
   );
 
   return (
@@ -54,6 +62,7 @@ export const SocketProvider = ({ children }) => {
         initSocket,
         isConnected,
         isReconnected,
+        errorMsg,
       }}
     >
       {children}

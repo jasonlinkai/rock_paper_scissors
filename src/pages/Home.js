@@ -6,16 +6,28 @@ import {
   createEnterRoomActionWith,
 } from "../store/slices/room";
 import Page from "../container/Page";
+import { setUser } from "../store/slices/user";
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userId = useSelector((state) => state.user.data.userId);
+  const [_userId, _setUserId] = useState(userId);
   const [_roomId, _setRoomId] = useState("");
+  const onUserIdChange = (v) => {
+    _setUserId(v)
+    dispatch(setUser({
+      userId: v,
+    }))
+  }
   const onEnter = () => {
     navigate("/room");
   };
   const onCreateRoom = async () => {
+    if (!_userId) {
+      alert("請先輸入你的名字");
+      return;
+    }
     const data = await dispatch(
       createCreateRoomActionWith({
         userId,
@@ -28,8 +40,8 @@ const Home = () => {
     }
   };
   const onEnterRoom = async () => {
-    if (!_roomId) {
-      alert("請先輸入房間號碼");
+    if (!_userId) {
+      alert("請先輸入你的名字");
       return;
     }
     const data = await dispatch(
@@ -47,27 +59,30 @@ const Home = () => {
   return (
     <Page>
       <div className="absolute w-60 h-60 rounded-xl bg-blue-300 -top-5 -left-16 z-0 transform rotate-45 hidden md:block"></div>
-      <div className="absolute w-48 h-48 rounded-xl bg-blue-300 -bottom-6 -right-10 transform rotate-12 hidden md:block"></div>
-      <div className="mx-4 my-4 py-8 px-8 bg-white rounded-2xl shadow-xl z-20">
+      <div className="absolute w-48 h-48 rounded-xl bg-blue-300 bottom-6 -right-10 transform rotate-12 hidden md:block"></div>
+      <div className="mx-4 my-4 py-8 px-8 sm:py-12 sm:px-12 bg-white rounded-2xl shadow-xl z-20">
         <div>
-          <h1 className="text-3xl font-bold text-center mb-4">
+          <h1 className="text-3xl font-bold text-center mb-8">
             剪刀、石頭、布
           </h1>
-          <p className="text-center text-sm mb-8 font-semibold text-gray-700">
-            線上即時猜拳遊戲，找朋友來PK吧!
+          <p className="text-center text-sm mb-6 font-semibold text-gray-700">
+            線上即時猜拳遊戲，找朋友來PK!
           </p>
-          <p className="text-center text-sm mb-2 font-semibold text-gray-700">
-            您的使用者ID
-          </p>
-          <p className="text-center text-sm mb-8 font-semibold text-gray-700">
-            {userId}
-          </p>
+        </div>
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="請輸入你的名字"
+            value={_userId}
+            className="block text-sm py-3 px-3 rounded-lg w-full border outline-blue-500"
+            onChange={(e) => onUserIdChange(e.target.value)}
+          />
         </div>
         <div className="space-y-4">
           <input
             type="text"
             placeholder="直接點擊或輸入房間號碼進入"
-            className="block text-sm py-3 px-4 rounded-lg w-full border outline-blue-500"
+            className="block text-sm py-3 px-3 rounded-lg w-full border outline-blue-500"
             onChange={(e) => _setRoomId(e.target.value)}
           />
         </div>

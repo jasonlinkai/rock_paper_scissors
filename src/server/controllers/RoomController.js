@@ -185,14 +185,13 @@ class RoomController {
   }
   registerRoute(app, roomModel) {
     app.post("/create-room", async function (req, res) {
-      const data = await roomModel.create({
-        userIds: [req.body.userId],
-      });
+      const data = await roomModel.create();
       res.json(data);
     });
 
     app.post("/enter-room", async function (req, res) {
-      const data = await roomModel.read(req.body.roomId);
+      const { roomId } = req.body;
+      const data = await roomModel.read(roomId);
       res.json(data);
     });
   }

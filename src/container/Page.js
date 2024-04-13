@@ -15,7 +15,7 @@ const Page = ({ className, children }) => {
   return (
     <div
       className={clsx([
-        "w-screen h-screen bg-blue-400 flex justify-center items-center",
+        "w-screen h-screen bg-blue-400 flex justify-center items-center overflow-hidden",
         className,
       ])}
       style={{

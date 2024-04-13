@@ -10,6 +10,7 @@ import Page from "../container/Page";
 import Button from "../components/Button";
 import Message from "../components/Message";
 import { setRoom } from "../store/slices/room";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHandRock,
@@ -23,7 +24,8 @@ const MESSAGE_SCROLL_CONTENT_ID = "MESSAGE_SCROLL_CONTENT_ID";
 
 const Room = () => {
   const dispatch = useDispatch();
-  const { socket, initSocket } = useSocketContext();
+  const navigate = useNavigate();
+  const { socket, initSocket, errorMsg } = useSocketContext();
   const isAtBottom = useRef(true);
   const userId = useSelector((state) => state.user.data.userId);
   const roomId = useSelector((state) => state.room.data.uid);
@@ -164,6 +166,13 @@ const Room = () => {
       scrollArea.scrollTop = scrollArea.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (errorMsg) {
+      alert(errorMsg);
+      navigate('/')
+    }
+  }, [navigate, errorMsg])
 
   return (
     <Page className="flex h-screen antialiased text-gray-800">

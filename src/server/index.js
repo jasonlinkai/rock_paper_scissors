@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require("path");
 const express = require("express");
 const { createServer } = require("node:http");
 const { Server } = require("socket.io");
@@ -11,14 +11,20 @@ const server = createServer(app);
 const io = new Server(server);
 const port = 3001;
 
-app.use(cors({
-  origin: ['http://localhost', 'http://localhost:443', 'http://localhost:3000'],
-}));
-app.use(express.static(path.join(__dirname, '../', '../', 'build')));
+app.use(
+  cors({
+    origin: [
+      "http://localhost",
+      "http://localhost:443",
+      "http://localhost:3000",
+    ],
+  })
+);
+app.use(express.static(path.join(__dirname, "../", "../", "build")));
 app.use(express.json());
 
 app.get("/", function (req, res) {
-  res.sendFile(path.join(__dirname, '../', '../', 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, "../", "../", "build", "index.html"));
 });
 
 // class
@@ -57,28 +63,36 @@ const enqueue = (action) => {
 const checkConnectionValid = async (params) => {
   const { userId, roomId } = params;
   if (!userId) {
-    throw Error("no userId");
+    return new Error("no userId");
   }
   if (!roomId) {
-    throw Error("no roomId");
+    return new Error("no roomId");
   }
   const roomSnapshot = await roomModel.read(roomId);
   if (!roomSnapshot) {
-    throw Error("room not fund");
+    return new Error("找不到房間");
   }
   const roomEntity = new ClassRoomEntity(roomSnapshot);
-
-  if (roomEntity.props.locked) {
-    throw Error("is gaming");
+  if (roomEntity.props.userIds.includes(userId)) {
+    return new Error("此房間已有同樣名字的人，請換個名字吧");
   }
-
+  if (roomEntity.props.locked) {
+    return new Error("遊戲中無法進入");
+  }
   if (
     !roomEntity.props.userIds.includes(userId) &&
     roomEntity.props.userIds.length === MAX_MEMBER_COUNT
   ) {
-    throw Error("room is full");
+    return new Error("房間已滿");
   }
+  return null;
 };
+
+io.use(async (socket, next) => {
+  const err = await checkConnectionValid(socket.handshake.query);
+  if (err) next(err)
+  else next();
+});
 
 io.on("connection", async (socket) => {
   const { userId, roomId } = socket.handshake.query;
@@ -89,7 +103,6 @@ io.on("connection", async (socket) => {
   log("event: connection");
 
   try {
-    await checkConnectionValid(socket.handshake.query);
     socket.join(roomId);
 
     enqueue(roomController.memberAdd({ roomId, userId }));
