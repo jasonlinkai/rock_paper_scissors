@@ -8,7 +8,8 @@ export const roomSlice = createSlice({
       uid: '',
       userIds: [],
       locked: false,
-      gameId: '',
+      raisedIds: [],
+      raisedRecord: {},
     },
   },
   reducers: {

@@ -8,10 +8,9 @@ const {
 const { computedRockPaperScissorsResult } = require("../../shared-utils/result");
 
 class RoomController {
-  constructor({ app, roomModel, gameModel, io }) {
+  constructor({ app, roomModel, io }) {
     this.app = app;
     this.roomModel = roomModel;
-    this.gameModel = gameModel;
     this.io = io;
     this.registerRoute(app, roomModel);
   }

@@ -3,7 +3,6 @@ class RoomEntity {
     uid = "",
     userIds = [],
     locked = false,
-    gameId = "",
     raisedIds = [],
     raisedRecord = {},
   }) {
