@@ -12,7 +12,7 @@ const io = new Server(server);
 const port = 3001;
 
 app.use(cors({
-  origin: ['http://localhost', 'http://localhost:443'],
+  origin: ['http://localhost', 'http://localhost:443', 'http://localhost:3000'],
 }));
 app.use(express.static(path.join(__dirname, '../', '../', 'build')));
 app.use(express.json());
